@@ -12,35 +12,32 @@
  * You should have received a copy of the GNU General Public License v3 along
  * with Dice. If not, see <http://www.gnu.org/licenses/>.
  */
-package net.easymfne.dice;
+@file:JvmName("Perms")
+package net.easymfne.dice
 
-import org.bukkit.permissions.Permissible;
+import org.bukkit.permissions.Permissible
 
 /**
  * This method provides a static way to check user permissions.
- * 
+ *
  * @author Eric Hildebrand
  */
-public class Perms {
-    
-    /** Is the user allowed to broadcast the results of their roll? */
-    public static boolean broadcast(Permissible p) {
-        return p.hasPermission("dice.roll.broadcast");
-    }
-    
-    /** Is the user allowed to reload the plugin's configuration? */
-    public static boolean canReload(Permissible p) {
-        return p.hasPermission("dice.reload");
-    }
-    
-    /** Can the user roll dice with any number of sides? */
-    public static boolean canRollAnyDice(Permissible p) {
-        return p.hasPermission("dice.roll.any");
-    }
-    
-    /** Can the user roll multiple dice at once? */
-    public static boolean canRollMultiple(Permissible p) {
-        return p.hasPermission("dice.roll.multiple");
-    }
-    
+
+fun broadcast(p: Permissible): Boolean {
+    return p.hasPermission("dice.roll.broadcast")
+}
+
+/** Is the user allowed to reload the plugin's configuration?  */
+fun canReload(p: Permissible): Boolean {
+    return p.hasPermission("dice.reload")
+}
+
+/** Can the user roll dice with any number of sides?  */
+fun canRollAnyDice(p: Permissible): Boolean {
+    return p.hasPermission("dice.roll.any")
+}
+
+/** Can the user roll multiple dice at once?  */
+fun canRollMultiple(p: Permissible): Boolean {
+    return p.hasPermission("dice.roll.multiple")
 }

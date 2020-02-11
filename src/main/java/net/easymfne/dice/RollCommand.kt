@@ -12,278 +12,244 @@
  * You should have received a copy of the GNU General Public License v3 along
  * with Dice. If not, see <http://www.gnu.org/licenses/>.
  */
-package net.easymfne.dice;
+package net.easymfne.dice
 
-import java.util.Random;
-
-import org.apache.commons.lang.StringUtils;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.apache.commons.lang.StringUtils
+import org.bukkit.ChatColor
+import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import java.util.*
+import kotlin.math.max
 
 /**
  * The class that handles all console and player commands for the plugin.
- * 
+ *
  * @author Eric Hildebrand
  */
-public class RollCommand implements CommandExecutor {
-    
-    private Dice plugin = null;
-    private Random random;
-    
-    /**
-     * Instantiate by getting a reference to the plugin instance, creating a new
-     * Random, and registering this class to handle the '/roll' command.
-     * 
-     * @param plugin
-     *            Reference to Dice plugin instance
-     */
-    public RollCommand(Dice plugin) {
-        this.plugin = plugin;
-        random = new Random();
-        plugin.getCommand("roll").setExecutor(this);
-    }
-    
+class RollCommand(private val plugin: Dice) : CommandExecutor {
+    private val random: Random = Random()
+
     /**
      * Broadcast the results of a dice roll to the players of the server.
      * Configuration can be set so that messages are only set within the world
      * that the player resides, and also within a certain distance of them. Dice
      * rolled by non-players (e.g. the Console) are sent to all players.
-     * 
+     *
      * @param sender
-     *            The user rolling the dice
+     * The user rolling the dice
      * @param message
-     *            The fully-formatted message to display
+     * The fully-formatted message to display
      */
-    private void broadcast(CommandSender sender, String message) {
+    private fun broadcast(sender: CommandSender, message: String?) {
         if (message == null) {
-            return;
+            return
         }
-        Player p1 = (sender instanceof Player ? (Player) sender : null);
-        
-        if (plugin.getPluginConfig().isLogging()) {
-            plugin.getLogger().info(message);
+        val p1 = if (sender is Player) sender else null
+        if (plugin.pluginConfig!!.isLogging) {
+            plugin.logger.info(message)
         }
-        
-        for (Player p2 : plugin.getServer().getOnlinePlayers()) {
-            if (plugin.getPluginConfig().isCrossworld() || p1 == null
-                    || p1.getWorld() == p2.getWorld()) {
-                if (plugin.getPluginConfig().getBroadcastRange() < 0
-                        || p1 == null
-                        || getDSquared(p1, p2) < square(plugin
-                                .getPluginConfig().getBroadcastRange())) {
-                    p2.sendMessage(message);
+        for (p2 in plugin.server.onlinePlayers) {
+            if (plugin.pluginConfig!!.isCrossworld || p1 == null || p1.world === p2.world) {
+                if (plugin.pluginConfig!!.broadcastRange < 0 || p1 == null ||
+                        getDSquared(p1, p2) < square(plugin.pluginConfig!!.broadcastRange)) {
+                    p2.sendMessage(message)
                 }
             }
         }
     }
-    
+
     /**
      * Release the '/roll' command from its ties to this class.
      */
-    public void close() {
-        plugin.getCommand("roll").setExecutor(null);
+    fun close() {
+        plugin.getCommand("roll")!!.setExecutor(null)
     }
-    
+
     /**
      * Format and return a String that will be used to display the roll results.
      * This method replaces tags: {PLAYER}, {RESULT}, {COUNT}, {SIDES}, {TOTAL}.
      * This method also replaces '&' style color codes with proper ChatColors.
-     * 
+     *
      * @param sender
-     *            The user that rolled the dice
+     * The user that rolled the dice
      * @param roll
-     *            The results of the roll, as an array
+     * The results of the roll, as an array
      * @param sides
-     *            The number of sides on the dice
+     * The number of sides on the dice
      * @return The fancy-formatted message
      */
-    private String formatString(CommandSender sender, Integer[] roll, int sides) {
-        String result;
-        if (Perms.broadcast(sender)) {
-            result = plugin.getPluginConfig().getBroadcastMessage();
+    private fun formatString(sender: CommandSender, roll: IntArray, sides: Int): String? {
+        var result = if (broadcast(sender)) {
+            plugin.pluginConfig!!.broadcastMessage
         } else {
-            result = plugin.getPluginConfig().getPrivateMessage();
+            plugin.pluginConfig!!.privateMessage
         }
-        if (result == null || result.length() == 0) {
-            return null;
+        if (result.isEmpty()) {
+            return null
         }
-        result = result.replaceAll("\\{PLAYER}", sender.getName());
-        result = result.replaceAll("\\{RESULT}", StringUtils.join(roll, ", "));
-        result = result.replaceAll("\\{COUNT}", "" + roll.length);
-        result = result.replaceAll("\\{SIDES}", "" + sides);
-        result = result.replaceAll("\\{TOTAL}", "" + sum(roll));
-        return ChatColor.translateAlternateColorCodes('&', result);
+        result = result.replace("\\{PLAYER}".toRegex(), sender.name)
+        result = result.replace("\\{RESULT}".toRegex(), StringUtils.join(roll.toTypedArray(), ", "))
+        result = result.replace("\\{COUNT}".toRegex(), "" + roll.size)
+        result = result.replace("\\{SIDES}".toRegex(), "" + sides)
+        result = result.replace("\\{TOTAL}".toRegex(), "" + roll.sum())
+        return ChatColor.translateAlternateColorCodes('&', result)
     }
-    
+
     /**
      * Get the squared distance between two players.
-     * 
+     *
      * @param p1
-     *            Player one
+     * Player one
      * @param p2
-     *            Player two
+     * Player two
      * @return The distance^2
      */
-    private int getDSquared(Player p1, Player p2) {
-        int dx = p1.getLocation().getBlockX() - p2.getLocation().getBlockX();
-        int dy = p1.getLocation().getBlockY() - p2.getLocation().getBlockY();
-        int dz = p1.getLocation().getBlockZ() - p2.getLocation().getBlockZ();
-        return dx * dx + dy * dy + dz * dz;
+    private fun getDSquared(p1: Player, p2: Player): Int {
+        val dx = p1.location.blockX - p2.location.blockX
+        val dy = p1.location.blockY - p2.location.blockY
+        val dz = p1.location.blockZ - p2.location.blockZ
+        return dx * dx + dy * dy + dz * dz
     }
-    
+
     /**
      * Show the results of a roll to a player privately.
-     * 
+     *
      * @param sender
-     *            The user rolling the dice
+     * The user rolling the dice
      * @param message
-     *            The fully-formatted message to display
+     * The fully-formatted message to display
      */
-    private void message(CommandSender sender, String message) {
+    private fun message(sender: CommandSender, message: String?) {
         if (message == null) {
-            return;
+            return
         }
-        sender.sendMessage(message);
+        sender.sendMessage(message)
     }
-    
+
     /**
      * This method handles user commands. Usage: "/roll <help,reload>" which
      * either shows help or reloads config. Usage: "/roll [count] [d<sides>]"
      * where the order of the arguments does not matter, but the number of sides
      * must be prefixed with 'd'.
      */
-    @Override
-    public boolean onCommand(CommandSender sender, Command command,
-            String label, String[] args) {
-        if (args.length == 1) {
-            if (args[0].equalsIgnoreCase("help")
-                    || args[0].equalsIgnoreCase("?")) {
-                showHelp(sender);
-                return true;
+    override fun onCommand(sender: CommandSender, command: Command,
+                           label: String, args: Array<String>): Boolean {
+        if (args.size == 1) {
+            if (args[0].equals("help", ignoreCase = true)
+                    || args[0].equals("?", ignoreCase = true)) {
+                showHelp(sender)
+                return true
             }
-            if (Perms.canReload(sender) && args[0].equalsIgnoreCase("reload")) {
-                plugin.reload();
-                sender.sendMessage("Configuration reloaded");
-                return true;
+            if (canReload(sender) && args[0].equals("reload", ignoreCase = true)) {
+                plugin.reload()
+                sender.sendMessage("Configuration reloaded")
+                return true
             }
         }
-        
-        int count = plugin.getPluginConfig().getDefaultCount();
-        int sides = plugin.getPluginConfig().getDefaultSides();
-        
+        var count = plugin.pluginConfig!!.defaultCount
+        var sides = plugin.pluginConfig!!.defaultSides
         /* Check for arguments representing dice count */
-        if (args.length > 0 && Perms.canRollMultiple(sender)) {
-            for (String arg : args) {
-                if (arg.matches("^[0-9]+$")) {
-                    count = Integer.parseInt(arg);
-                    break;
+        if (args.isNotEmpty() && canRollMultiple(sender)) {
+            for (arg in args) {
+                if (Regex("^[0-9]+$").matches(arg)) {
+                    count = arg.toInt()
+                    break
                 }
             }
         }
         /* Check for arguments representing dice sides */
-        if (args.length > 0 && Perms.canRollAnyDice(sender)) {
-            for (String arg : args) {
-                if (arg.matches("^d[0-9]+$")) {
-                    sides = Integer.parseInt(arg.substring(1));
-                    break;
+        if (args.isNotEmpty() && canRollAnyDice(sender)) {
+            for (arg in args) {
+                if (Regex("^d[0-9]+$").matches(arg)) {
+                    sides = arg.substring(1).toInt()
+                    break
                 }
             }
         }
-        
         /* Check the loaded or parsed values against the defined maximums. */
-        if (count > plugin.getPluginConfig().getMaximumCount()) {
+        if (count > plugin.pluginConfig!!.maximumCount) {
             sender.sendMessage(ChatColor.RED
-                    + "You can't roll that many dice at once");
-            return false;
+                    .toString() + "You can't roll that many dice at once")
+            return false
         }
-        if (sides > plugin.getPluginConfig().getMaximumSides()) {
+        if (sides > plugin.pluginConfig!!.maximumSides) {
             sender.sendMessage(ChatColor.RED
-                    + "You can't roll dice with that many sides");
-            return false;
+                    .toString() + "You can't roll dice with that many sides")
+            return false
         }
-        
         /* Roll the dice and handle the outcome */
-        roll(sender, Math.max(1, count), Math.max(2, sides));
-        return true;
+        roll(sender, max(1, count), max(2, sides))
+        return true
     }
-    
+
     /**
      * Roll a set of dice for a user, and either broadcast the results publicly
      * or send them privately, depending on the user's permissions.
-     * 
+     *
      * @param sender
-     *            The user rolling the dice
+     * The user rolling the dice
      * @param count
-     *            The number of dice to roll
+     * The number of dice to roll
      * @param sides
-     *            The number of sides per die
+     * The number of sides per die
      */
-    private void roll(CommandSender sender, int count, int sides) {
-        Integer[] result = new Integer[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = random.nextInt(sides) + 1;
+    private fun roll(sender: CommandSender, count: Int, sides: Int) {
+        val result = IntArray(count) {
+            random.nextInt(sides) + 1
         }
-        if (Perms.broadcast(sender)) {
-            broadcast(sender, formatString(sender, result, sides));
+        if (broadcast(sender)) {
+            broadcast(sender, formatString(sender, result, sides))
         } else {
-            message(sender, formatString(sender, result, sides));
+            message(sender, formatString(sender, result, sides))
         }
     }
-    
+
     /**
      * Show personalized usage help to the user, taking into account his or her
      * permissions.
-     * 
+     *
      * @param sender
-     *            The user to help
+     * The user to help
      */
-    private void showHelp(CommandSender sender) {
+    private fun showHelp(sender: CommandSender) {
         /* Treat the pair of booleans as 2^0 and 2^1 bits */
-        int perms = (Perms.canRollMultiple(sender) ? 1 : 0)
-                + (Perms.canRollAnyDice(sender) ? 2 : 0);
-        switch (perms) {
-        case 1:
-            sender.sendMessage(ChatColor.RED + "Usage: /roll [count]");
-            return;
-        case 2:
-            sender.sendMessage(ChatColor.RED + "Usage: /roll [d<sides>]");
-            return;
-        case 3:
-            sender.sendMessage(ChatColor.RED
-                    + "Usage: /roll [count] [d<sides>]");
-            return;
-        default:
-            sender.sendMessage(ChatColor.RED + "Usage: /roll");
+        val perms = ((if (canRollMultiple(sender)) 1 else 0)
+                + if (canRollAnyDice(sender)) 2 else 0)
+        when (perms) {
+            1 -> {
+                sender.sendMessage(ChatColor.RED.toString() + "Usage: /roll [count]")
+                return
+            }
+            2 -> {
+                sender.sendMessage(ChatColor.RED.toString() + "Usage: /roll [d<sides>]")
+                return
+            }
+            3 -> {
+                sender.sendMessage(ChatColor.RED.toString() + "Usage: /roll [count] [d<sides>]")
+                return
+            }
+            else -> sender.sendMessage(ChatColor.RED.toString() + "Usage: /roll")
         }
     }
-    
+
     /**
-     * Square an input. Useful for decluttering the code.
-     * 
+     * Square an input. Useful for de-cluttering the code.
+     *
      * @param input
-     *            The number to be squared
+     * The number to be squared
      * @return The result
      */
-    private int square(int input) {
-        return input * input;
+    private fun square(input: Int): Int {
+        return input * input
     }
-    
+
     /**
-     * Calculate the sum of an array of numbers.
-     * 
-     * @param roll
-     *            The array of numbers
-     * @return The sum
+     * Instantiate by getting a reference to the plugin instance, creating a new
+     * Random, and registering this class to handle the '/roll' command.
      */
-    private int sum(Integer[] roll) {
-        int t = 0;
-        for (int i : roll) {
-            t += i;
-        }
-        return t;
+    init {
+        plugin.getCommand("roll")!!.setExecutor(this)
     }
-    
 }
