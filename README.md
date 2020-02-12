@@ -1,12 +1,4 @@
-<center>![Dice](http://www.easymfne.net/images/dice.png)</center>
 
-<center>[Source](https://github.com/EasyMFnE/Dice) |
-[Change Log](https://github.com/EasyMFnE/Dice/blob/master/CHANGES.log) |
-[Feature Request](https://github.com/EasyMFnE/Dice/issues) |
-[Bug Report](https://github.com/EasyMFnE/Dice/issues) |
-[Donate](https://www.paypal.com/cgi-bin/webscr?hosted_button_id=457RX2KYUDY5G&item_name=Dice&cmd=_s-xclick)</center>
-
-<center>**Latest Release:** v1.0 for Bukkit 1.7+</center>
 
 ## About ##
 
@@ -75,9 +67,6 @@ The `messages` configuration nodes will replace the following tags:
 
 This plugin is continually tested to ensure that it is performing correctly, but sometimes bugs can sneak in.  If you have found a bug with the plugin, or if you have a feature request, please [create an issue on Github](https://github.com/EasyMFnE/Dice/issues).
 
-## Donations ##
-
-Donating is a great way to thank the developer if you find the plugin useful for your server, and encourages work on more 100% free and open-source plugins.  If you would like to donate (any amount), there is an easily accessible link in the top right corner of this page.  Thank you!
 
 ## Privacy ##
 
